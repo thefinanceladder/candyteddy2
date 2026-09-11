@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🍭 Love You Candy 🧸</title>
+<style>
+  :root{ --ink:#3B2A22; --pink:#FF7AA2; --pinkDark:#D9556F; --cream:#FFF3E4; --purple:#E7D7F5; --brown:#8B5B37; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{height:100%;margin:0;}
+  body{
+    min-height:100%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 30% 15%, #FFF3F7, #FCE0EC 50%, #E7D7F5 100%);
+    font-family:-apple-system,"Segoe UI Rounded","Trebuchet MS","Helvetica Neue",sans-serif;
+    color:var(--ink); padding:16px;
+  }
+  #card{
+    width:min(94vw,400px); background:linear-gradient(180deg,#FFF3E4,#FCE0EC 60%,#F3E1F7);
+    border-radius:34px; padding:14px; box-shadow:0 18px 40px rgba(180,90,120,0.25), inset 0 0 0 6px rgba(255,255,255,0.6);
+    position:relative; overflow:hidden; min-height:560px; display:flex; flex-direction:column;
+  }
+
+  #topbar{ display:none; align-items:center; gap:8px; padding:4px 4px 10px 4px; }
+  .tb-stat{ background:rgba(255,255,255,0.7); border-radius:14px; padding:5px 10px; font-weight:800; font-size:13px; white-space:nowrap; }
+  #tbMeterWrap, #homeMeterWrap{ flex:1; height:14px; background:rgba(255,255,255,0.6); border-radius:10px; overflow:hidden; position:relative; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.8); }
+  #tbMeterBar, #homeMeterBar{ height:100%; width:0%; background:linear-gradient(90deg,#FFB3C0,#FF7AA2); transition:width .3s ease; }
+  #tbMeterLabel, #homeMeterLabel{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:800; color:#7a2f45; }
+  .iconBtn{ border:none; background:rgba(255,255,255,0.7); border-radius:12px; width:32px; height:32px; font-size:15px; cursor:pointer; }
+
+  .screen{ flex:1; display:flex; flex-direction:column; }
+
+  /* TITLE / HOME */
+  #screen-title{ position:relative; align-items:center; text-align:center; padding-top:4px; }
+  #particles{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  #particles span{ position:absolute; bottom:-20px; font-size:16px; opacity:0.75; animation: floatUp linear infinite; }
+  @keyframes floatUp{ 0%{ transform:translateY(0) rotate(0deg); opacity:0; } 10%{opacity:0.8;} 100%{ transform:translateY(-520px) rotate(30deg); opacity:0; } }
+  .homeTop{ width:100%; display:flex; align-items:center; gap:8px; margin-bottom:6px; z-index:1; position:relative; }
+  #screen-title h1{ margin:6px 0 0 0; font-size:23px; z-index:1; position:relative; }
+  #screen-title .subtitle{ margin:2px 0 0 0; font-size:12.5px; opacity:0.75; z-index:1; position:relative; }
+  #screen-title .daily{ margin:4px 0 0 0; font-size:11.5px; font-style:italic; color:var(--pinkDark); z-index:1; position:relative; }
+  .heroBears{ display:flex; gap:14px; align-items:flex-end; justify-content:center; margin:16px 0; z-index:1; position:relative; }
+  .bearWrap{ width:86px; height:86px; }
+  .idleBob{ animation: bob 2.6s ease-in-out infinite; }
+  .idleBob2{ animation: bob 2.6s ease-in-out infinite; animation-delay: 0.6s; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+  .menuGrid{ width:100%; display:flex; flex-direction:column; gap:9px; margin-top:auto; z-index:1; position:relative; }
+
+  button.menuBtn{
+    border:none; background:linear-gradient(135deg,#FF9FB3,#FF7AA2); color:#fff; font-weight:800; font-size:15px;
+    padding:12px 18px; border-radius:18px; box-shadow:0 7px 0 var(--pinkDark); cursor:pointer;
+  }
+  button.menuBtn:active{ transform:translateY(5px); box-shadow:0 2px 0 var(--pinkDark); }
+  button.ghostMenuBtn{ background:linear-gradient(135deg,#EAD9F7,#DFC3F2); box-shadow:0 7px 0 #B695CF; color:#5A3B72; }
+  button.ghostMenuBtn:active{ box-shadow:0 2px 0 #B695CF; }
+
+  .screenTitle{ text-align:center; font-size:18px; margin:2px 0 12px 0; }
+  .backBtn{ border:none; background:transparent; color:var(--brown); font-weight:700; font-size:12.5px; text-decoration:underline; margin-top:10px; cursor:pointer; align-self:center; }
+
+  .gameCard{
+    display:block; text-align:left; border:none; width:100%; background:rgba(255,255,255,0.65);
+    border-radius:18px; padding:12px 14px; margin-bottom:10px; font-size:15px; font-weight:800; cursor:pointer;
+    box-shadow:0 3px 0 rgba(0,0,0,0.05);
+  }
+  .gcSub{ display:block; font-size:11px; font-weight:600; opacity:0.65; margin-top:2px; }
+  .gameCard:disabled{ opacity:0.55; cursor:default; }
+
+  .miniHud{ display:flex; justify-content:space-between; font-size:13px; font-weight:800; padding:4px 4px 8px 4px; }
+  .miniField{ position:relative; flex:1; min-height:340px; border-radius:22px; overflow:hidden;
+    background:linear-gradient(180deg,#FFF6EC,#FCE3EF); box-shadow:inset 0 0 0 4px rgba(255,255,255,0.7); touch-action:none; }
+  .fallingItem{ position:absolute; font-size:24px; z-index:3; pointer-events:none; }
+  .playerChar{ position:absolute; bottom:8px; left:50%; width:74px; height:74px; z-index:4; transform:translateX(-50%); filter:drop-shadow(0 5px 5px rgba(0,0,0,.15)); }
+  .throwerChar{ position:absolute; top:8px; left:50%; width:54px; height:54px; transform:translateX(-50%); opacity:0.9; z-index:2; }
+  .pop2{ position:absolute; font-size:18px; z-index:6; pointer-events:none; animation:popUp2 .6s ease-out forwards; }
+  @keyframes popUp2{ 0%{transform:translateY(0) scale(.6); opacity:1;} 100%{transform:translateY(-36px) scale(1.25); opacity:0;} }
+  .flashHit{ animation:flashRed2 .35s ease; }
+  @keyframes flashRed2{ 0%{filter:brightness(1);} 40%{filter:brightness(1.6) saturate(1.4) hue-rotate(-20deg);} 100%{filter:brightness(1);} }
+
+  .miniOverlay{
+    position:absolute; inset:0; background:rgba(255,244,230,0.95); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:22px; z-index:10; border-radius:22px;
+  }
+  .miniOverlay h2{ margin:4px 0; font-size:19px; }
+  .miniOverlay p{ margin:4px 0 14px 0; font-size:13.5px; opacity:0.85; max-width:250px; }
+
+  .memGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:4px; }
+  .memCard{ aspect-ratio:1/1; border-radius:14px; border:none; background:linear-gradient(135deg,#FFD9E6,#FFC2D6);
+    font-size:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.06); transition:transform .15s ease; }
+  .memCard.hidden-face{ background:linear-gradient(135deg,#C99168,#8B5B37); color:transparent; }
+  .memCard.matched{ background:linear-gradient(135deg,#B8E8D0,#9FE3C4); }
+  .memCard.flip{ animation:flipCard .3s ease; }
+  @keyframes flipCard{ 0%{transform:scale(0.85) rotateY(90deg);} 100%{transform:scale(1) rotateY(0);} }
+
+  .mazeGrid{ display:grid; grid-template-columns:repeat(5,1fr); gap:4px; width:min(100%,260px); margin:10px auto; }
+  .mazeCell{ aspect-ratio:1/1; border-radius:8px; background:rgba(255,255,255,0.55); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .mazeCell.obstacle{ background:#CDE7CA; }
+  .mazeCell.goalCell{ background:#FFE2EC; }
+  .dpad{ display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:8px; }
+  .dpad button{ width:42px; height:34px; border:none; border-radius:10px; background:#FFD9E6; font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 3px 0 #E6A8BE; }
+  .dpad button:active{ transform:translateY(2px); box-shadow:0 1px 0 #E6A8BE; }
+  .dpad > div{ display:flex; gap:34px; }
+
+  .dialogueBox{ background:rgba(255,255,255,0.7); border-radius:18px; padding:16px; margin-bottom:12px; min-height:120px; }
+  .dialogueBears{ text-align:center; font-size:28px; margin-bottom:6px; }
+  .storyWho{ font-weight:800; font-size:13px; color:var(--pinkDark); margin-bottom:4px; }
+  .storyTextLine{ font-size:14px; line-height:1.5; min-height:44px; }
+
+  .collSection h3{ font-size:14px; margin:10px 0 6px 2px; }
+  .collGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .collCard{ border:none; background:rgba(255,255,255,0.65); border-radius:14px; padding:8px 4px; text-align:center; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.05); }
+  .collCard.unlocked{ background:linear-gradient(135deg,#B8E8D0,#9FE3C4); }
+  .collIcon{ font-size:22px; }
+  .collName{ font-size:9.5px; font-weight:700; margin:3px 0; line-height:1.2; min-height:22px; }
+  .collCost{ font-size:10px; font-weight:800; color:var(--pinkDark); }
+  .shake{ animation:shakeIt .4s ease; }
+  @keyframes shakeIt{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+
+  #footer{ text-align:center; font-size:10.5px; opacity:0.5; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<div id="card">
+
+  <div id="topbar">
+    <div class="tb-stat">💗 <span id="tbPoints">0</span></div>
+    <div id="tbMeterWrap"><div id="tbMeterBar"></div><div id="tbMeterLabel">0%</div></div>
+    <button class="iconBtn" id="tbSettingsBtn">⚙️</button>
+  </div>
+
+  <!-- TITLE / HOME -->
+  <div class="screen" id="screen-title">
+    <div id="particles"></div>
+    <div class="homeTop">
+      <div class="tb-stat">💗 <span id="homePoints">0</span></div>
+      <div id="homeMeterWrap"><div id="homeMeterBar"></div><div id="homeMeterLabel">0%</div></div>
+    </div>
+    <h1>🍭 Love You Candy 🧸</h1>
+    <p class="subtitle">Two hearts. One sweet adventure.</p>
+    <p class="daily" id="dailyMsg">Today is a sweet day for love. 🍭❤️</p>
+    <div class="heroBears">
+      <div class="bearWrap idleBob" id="titleCandy"></div>
+      <div class="bearWrap idleBob2" id="titleTeddy"></div>
+    </div>
+    <div class="menuGrid">
+      <button class="menuBtn" id="btnPlay">❤️ Play</button>
+      <button class="menuBtn" id="btnStory">📖 Story</button>
+      <button class="menuBtn" id="btnCollection">👗 Collection</button>
+      <button class="menuBtn ghostMenuBtn" id="btnSettings">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <!-- HUB -->
+  <div class="screen" id="screen-hub" style="display:none;">
+    <h2 class="screenTitle">Choose a mini-game</h2>
+    <button class="gameCard" id="hubCatch">❤️ Catch My Heart<span class="gcSub">Catch falling hearts, avoid broken ones</span></button>
+    <button class="gameCard" id="hubMemory">🧠 Sweet Memory<span class="gcSub">Flip and match the cute pairs</span></button>
+    <button class="gameCard" id="hubDelivery">🍭 Candy Delivery<span class="gcSub">Guide Teddy through the maze to Candy</span></button>
+    <button class="backBtn" id="hubBack">← Back to title</button>
+  </div>
+
+  <!-- CATCH MY HEART -->
+  <div class="screen" id="screen-catch" style="display:none;">
+    <div class="miniHud">
+      <div>⏱ <span id="catchTimer">45</span>s</div>
+      <div>🎯 <span id="catchGoalLabel">0/15</span></div>
+      <div id="catchLives">💗💗💗</div>
+    </div>
+    <div id="catchField" class="miniField">
+      <div class="throwerChar" id="catchThrower"></div>
+      <div class="playerChar" id="catchPlayer"></div>
+      <div class="miniOverlay" id="catchOverlay" style="display:none;"></div>
+    </div>
+    <button class="backBtn" id="catchBack">← Back to games</button>
+  </div>
+
+  <!-- SWEET MEMORY -->
+  <div class="screen" id="screen-memory" style="display:none;">
+    <div class="miniHud"><div>⏱ <span id="memTime">0</span>s</div><div>Pairs: <span id="memPairs">0/6</span></div></div>
+    <div id="memGrid" class="memGrid" style="position:relative;">
+      <div class="miniOverlay" id="memOverlay" style="display:none; position:absolute;"></div>
+    </div>
+    <button class="backBtn" id="memBack">← Back to games</button>
+  </div>
+
+  <!-- CANDY DELIVERY -->
+  <div class="screen" id="screen-delivery" style="display:none;">
+    <div class="miniHud"><div>Guide Teddy to Candy 🍭</div></div>
+    <div style="position:relative;">
+      <div id="mazeGrid" class="mazeGrid"></div>
+      <div class="miniOverlay" id="deliveryOverlay" style="display:none; position:absolute; inset:0; border-radius:18px;"></div>
+    </div>
+    <div class="dpad">
+      <button id="dUp">▲</button>
+      <div><button id="dLeft">◀</button><button id="dRight">▶</button></div>
+      <button id="dDown">▼</button>
+    </div>
+    <button class="backBtn" id="deliveryBack">← Back to games</button>
+  </div>
+
+  <!-- STORY -->
+  <div class="screen" id="screen-story" style="display:none;">
+    <h2 class="screenTitle">Story</h2>
+    <div id="storyList"></div>
+    <div id="storyPlayer" style="display:none;">
+      <div class="dialogueBox">
+        <div class="dialogueBears" id="storyBearsRow">🍭 🧸</div>
+        <div class="storyWho" id="storyWho"></div>
+        <div class="storyTextLine" id="storyText"></div>
+      </div>
+      <button class="menuBtn" id="storyNextBtn">Next →</button>
+    </div>
+    <button class="backBtn" id="storyBack">← Back to title</button>
+  </div>
+
+  <!-- COLLECTION -->
+  <div class="screen" id="screen-collection" style="display:none;">
+    <h2 class="screenTitle">Collection</h2>
+    <div class="collSection"><h3>👗 Outfits</h3><div id="collOutfits" class="collGrid"></div></div>
+    <div class="collSection"><h3>🎁 Gifts</h3><div id="collGifts" class="collGrid"></div></div>
+    <div class="collSection"><h3>🖼️ Backgrounds</h3><div id="collBgs" class="collGrid"></div></div>
+    <button class="backBtn" id="collBack">← Back to title</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings" style="display:none;">
+    <h2 class="screenTitle">Settings</h2>
+    <button class="menuBtn" id="muteBtn">🔊 Sound: On</button>
+    <button class="menuBtn ghostMenuBtn" id="resetBtn">🗑 Reset Progress</button>
+    <button class="backBtn" id="settingsBack">← Back</button>
+  </div>
+
+  <div id="footer">made with 💗 — Love You Candy</div>
+</div>
+
+<script>
+(function(){
+
+  // ---------------- Bear SVG ----------------
+  function bearSVG(kind){
+    const body = kind==='candy' ? '#FFFDF9' : '#C99168';
+    const earIn = kind==='candy' ? '#3B2A22' : '#8B5B37';
+    const outline = '#3B2A22';
+    const blush = '#FFB3C0';
+    return `<svg viewBox="0 0 100 100" width="100%" height="100%">
+      <ellipse cx="50" cy="90" rx="30" ry="6" fill="rgba(0,0,0,0.08)"/>
+      <circle cx="26" cy="26" r="14" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="74" cy="26" r="14" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="26" cy="26" r="6" fill="${earIn}"/>
+      <circle cx="74" cy="26" r="6" fill="${earIn}"/>
+      <circle cx="50" cy="52" r="34" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="30" cy="58" r="7" fill="${blush}"/>
+      <circle cx="70" cy="58" r="7" fill="${blush}"/>
+      <circle cx="38" cy="46" r="3.4" fill="${outline}"/>
+      <circle cx="62" cy="46" r="3.4" fill="${outline}"/>
+      <path d="M44 56 q6 6 12 0" stroke="${outline}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="20" cy="82" rx="9" ry="7" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <ellipse cx="80" cy="82" rx="9" ry="7" fill="${body}" stroke="${outline}" stroke-width="3"/>
+    </svg>`;
+  }
+  document.getElementById('titleCandy').innerHTML = bearSVG('candy');
+  document.getElementById('titleTeddy').innerHTML = bearSVG('teddy');
+  document.getElementById('catchPlayer').innerHTML = bearSVG('candy');
+  document.getElementById('catchThrower').innerHTML = bearSVG('teddy');
+
+  // particles
+  (function(){
+    const p = document.getElementById('particles');
+    const glyphs = ['❤️','🍭','✨'];
+    for(let i=0;i<8;i++){
+      const s = document.createElement('span');
+      s.textContent = glyphs[i % glyphs.length];
+      s.style.left = (5 + Math.random()*90) + '%';
+      s.style.animationDuration = (7 + Math.random()*6) + 's';
+      s.style.animationDelay = (Math.random()*6) + 's';
+      s.style.fontSize = (13 + Math.random()*10) + 'px';
+      p.appendChild(s);
+    }
+  })();
+
+  // ---------------- State / persistence ----------------
+  const DEFAULT_STATE = { lovePoints:0, loveMeter:0, unlockedScenes:[], unlockedOutfits:[], unlockedGifts:[], unlockedBackgrounds:[], muted:false };
+  let state;
+  try{ state = Object.assign({}, DEFAULT_STATE, JSON.parse(localStorage.getItem('lyc_state')||'{}')); }
+  catch(e){ state = Object.assign({}, DEFAULT_STATE); }
+
+  function saveState(){ try{ localStorage.setItem('lyc_state', JSON.stringify(state)); }catch(e){} }
+
+  function renderTopBar(){
+    document.getElementById('tbPoints').textContent = state.lovePoints;
+    document.getElementById('homePoints').textContent = state.lovePoints;
+    document.getElementById('tbMeterBar').style.width = state.loveMeter + '%';
+    document.getElementById('homeMeterBar').style.width = state.loveMeter + '%';
+    document.getElementById('tbMeterLabel').textContent = state.loveMeter + '%';
+    document.getElementById('homeMeterLabel').textContent = state.loveMeter + '%';
+  }
+  renderTopBar();
+
+  const MILESTONES = [{pct:25,id:'meeting'},{pct:50,id:'gift'},{pct:75,id:'date'},{pct:100,id:'hug'}];
+  function checkMilestones(){
+    MILESTONES.forEach(m=>{
+      if(state.loveMeter >= m.pct && state.unlockedScenes.indexOf(m.id) === -1){
+        state.unlockedScenes.push(m.id);
+      }
+    });
+  }
+  function addLove(points, meterPct){
+    state.lovePoints += points;
+    state.loveMeter = Math.min(100, state.loveMeter + meterPct);
+    checkMilestones();
+    saveState();
+    renderTopBar();
+  }
+
+  // ---------------- Audio ----------------
+  let audioCtx = null;
+  function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+  function beep(freq,dur,type){
+    if(state.muted || !audioCtx) return;
+    try{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+      o.stop(audioCtx.currentTime + dur);
+    }catch(e){}
+  }
+  function sfxClick(){ ensureAudio(); beep(440,0.08,'sine'); }
+  function sfxCollect(){ ensureAudio(); beep(660,0.1,'triangle'); }
+  function sfxError(){ ensureAudio(); beep(180,0.15,'sawtooth'); }
+  function sfxMatch(){ ensureAudio(); beep(740,0.1,'square'); }
+  function sfxComplete(){ ensureAudio(); beep(523,0.15,'sine'); setTimeout(()=>beep(659,0.15,'sine'),120); setTimeout(()=>beep(784,0.2,'sine'),240); }
+  function sfxLove(){ ensureAudio(); beep(988,0.15,'triangle'); }
+
+  // ---------------- Screen navigation ----------------
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>{ s.style.display = 'none'; });
+    document.getElementById(id).style.display = 'flex';
+    document.getElementById('topbar').style.display = (id === 'screen-title') ? 'none' : 'flex';
+  }
+
+  document.getElementById('btnPlay').onclick = ()=>{ sfxClick(); showScreen('screen-hub'); };
+  document.getElementById('btnStory').onclick = ()=>{ sfxClick(); showScreen('screen-story'); renderStoryList(); };
+  document.getElementById('btnCollection').onclick = ()=>{ sfxClick(); showScreen('screen-collection'); renderCollection(); };
+  document.getElementById('btnSettings').onclick = ()=>{ sfxClick(); showScreen('screen-settings'); updateMuteLabel(); };
+  document.getElementById('tbSettingsBtn').onclick = ()=>{ sfxClick(); showScreen('screen-settings'); updateMuteLabel(); };
+
+  document.getElementById('hubBack').onclick = ()=>{ sfxClick(); showScreen('screen-title'); };
+  document.getElementById('storyBack').onclick = ()=>{ sfxClick(); showScreen('screen-title'); };
+  document.getElementById('collBack').onclick = ()=>{ sfxClick(); showScreen('screen-title'); };
+  document.getElementById('settingsBack').onclick = ()=>{ sfxClick(); showScreen('screen-title'); };
+
+  document.getElementById('hubCatch').onclick = ()=>{ sfxClick(); showScreen('screen-catch'); startCatch(); };
+  document.getElementById('hubMemory').onclick = ()=>{ sfxClick(); showScreen('screen-memory'); startMemory(); };
+  document.getElementById('hubDelivery').onclick = ()=>{ sfxClick(); showScreen('screen-delivery'); startDelivery(); };
+
+  document.getElementById('catchBack').onclick = ()=>{ sfxClick(); stopCatch(); showScreen('screen-hub'); };
+  document.getElementById('memBack').onclick = ()=>{ sfxClick(); stopMemory(); showScreen('screen-hub'); };
+  document.getElementById('deliveryBack').onclick = ()=>{ sfxClick(); stopDelivery(); showScreen('screen-hub'); };
+
+  // ---------------- Settings ----------------
+  function updateMuteLabel(){
+    document.getElementById('muteBtn').textContent = state.muted ? '🔇 Sound: Off' : '🔊 Sound: On';
+  }
+  document.getElementById('muteBtn').onclick = ()=>{
+    state.muted = !state.muted; saveState(); updateMuteLabel(); if(!state.muted) sfxClick();
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if(confirm('Reset all Love You Candy progress? This cannot be undone.')){
+      state = Object.assign({}, DEFAULT_STATE);
+      saveState(); renderTopBar(); sfxError();
+      showScreen('screen-title');
+    }
+  };
+
+  // ================= MINI-GAME 1: CATCH MY HEART =================
+  const catch_ = { running:false, timeLeft:45, hearts:0, score:0, lives:3, items:[], spawnT:null, timeT:null, rafId:null, fieldW:0, fieldH:0, playerX:0 };
+  const CATCH_GOAL = 15;
+  const catchField = document.getElementById('catchField');
+  const catchPlayer = document.getElementById('catchPlayer');
+  const catchOverlay = document.getElementById('catchOverlay');
+
+  function catchSize(){
+    const r = catchField.getBoundingClientRect();
+    catch_.fieldW = r.width; catch_.fieldH = r.height;
+    catch_.playerX = catch_.fieldW/2 - 37;
+    positionPlayer();
+  }
+  function positionPlayer(){ catchPlayer.style.left = catch_.playerX + 'px'; catchPlayer.style.transform = 'none'; }
+  window.addEventListener('resize', ()=>{ if(catch_.running) catchSize(); });
+
+  function catchSetX(clientX){
+    const r = catchField.getBoundingClientRect();
+    let x = clientX - r.left - 37;
+    x = Math.max(2, Math.min(catch_.fieldW - 74 - 2, x));
+    catch_.playerX = x; positionPlayer();
+  }
+  catchField.addEventListener('pointerdown', e=>{ if(catch_.running) catchSetX(e.clientX); });
+  catchField.addEventListener('pointermove', e=>{ if(catch_.running && !(e.pressure===0 && e.pointerType==='mouse')) catchSetX(e.clientX); });
+  catchField.addEventListener('touchmove', e=>{ if(catch_.running){ e.preventDefault(); const t=e.touches[0]; if(t) catchSetX(t.clientX);} }, {passive:false});
+  document.addEventListener('keydown', e=>{
+    if(!catch_.running) return;
+    if(e.key==='ArrowLeft'){ catch_.playerX = Math.max(2, catch_.playerX-24); positionPlayer(); }
+    if(e.key==='ArrowRight'){ catch_.playerX = Math.min(catch_.fieldW-74-2, catch_.playerX+24); positionPlayer(); }
+  });
+
+  function catchUpdateHud(){
+    document.getElementById('catchTimer').textContent = catch_.timeLeft;
+    document.getElementById('catchGoalLabel').textContent = catch_.hearts + '/' + CATCH_GOAL;
+    document.getElementById('catchLives').textContent = '💗'.repeat(Math.max(catch_.lives,0)) + '🤍'.repeat(Math.max(3-catch_.lives,0));
+  }
+
+  function catchSpawn(){
+    const roll = Math.random();
+    let type;
+    if(roll < 0.6) type = 'heart';
+    else if(roll < 0.8) type = 'candy';
+    else type = 'broken';
+    const symbol = type==='heart' ? '❤️' : (type==='candy' ? '🍭' : '💔');
+    const el = document.createElement('div');
+    el.className = 'fallingItem';
+    el.textContent = symbol;
+    const x = 8 + Math.random() * (catch_.fieldW - 34);
+    el.style.left = x + 'px'; el.style.top = '54px';
+    catchField.insertBefore(el, catchPlayer);
+    catch_.items.push({ el, x, y:54, speed: 95 + Math.random()*40 + catch_.hearts*2, type, caught:false });
+  }
+  function catchScheduleSpawn(){
+    clearTimeout(catch_.spawnT);
+    catch_.spawnT = setTimeout(()=>{ if(catch_.running){ catchSpawn(); catchScheduleSpawn(); } }, Math.max(360, 720 - catch_.hearts*12));
+  }
+
+  function catchPop(x,y,text,color){
+    const p = document.createElement('div');
+    p.className='pop2'; p.textContent=text; p.style.left=x+'px'; p.style.top=y+'px'; p.style.color=color||'#D9556F';
+    catchField.appendChild(p); setTimeout(()=>p.remove(),650);
+  }
+
+  function catchTick(ts){
+    if(!catch_.running) return;
+    const teddyRect = { left: catch_.playerX+8, right: catch_.playerX+74-8, top: catch_.fieldH-10-74+18 };
+    for(let i=catch_.items.length-1;i>=0;i--){
+      const it = catch_.items[i];
+      it.y += it.speed/60;
+      it.el.style.top = it.y+'px';
+      if(!it.caught && it.y+18 >= teddyRect.top && it.y <= catch_.fieldH-8){
+        const cx = it.x+12;
+        if(cx >= teddyRect.left && cx <= teddyRect.right){
+          it.caught = true; it.el.remove(); catch_.items.splice(i,1);
+          if(it.type==='broken'){
+            catchPop(it.x, it.y, 'ouch!', '#B33B4A'); sfxError();
+            catch_.lives -= 1;
+            catchPlayer.classList.remove('flashHit'); void catchPlayer.offsetWidth; catchPlayer.classList.add('flashHit');
+            catchUpdateHud();
+            if(catch_.lives<=0){ endCatch(false); }
+          } else if(it.type==='heart'){
+            catch_.hearts += 1; catch_.score += 2; sfxCollect();
+            catchPop(it.x, it.y-6, '+2', '#4CAF7D'); catchUpdateHud();
+            if(catch_.hearts >= CATCH_GOAL){ endCatch(true); }
+          } else {
+            catch_.score += 1; sfxCollect();
+            catchPop(it.x, it.y-6, '+1', '#4CAF7D'); catchUpdateHud();
+          }
+          continue;
+        }
+      }
+      if(it.y > catch_.fieldH+10){ it.el.remove(); catch_.items.splice(i,1); }
+    }
+    catch_.rafId = requestAnimationFrame(catchTick);
+  }
+
+  function startCatch(){
+    catch_.running = true; catch_.timeLeft = 45; catch_.hearts = 0; catch_.score = 0; catch_.lives = 3;
+    catch_.items.forEach(it=>it.el.remove()); catch_.items = [];
+    catchOverlay.style.display = 'none';
+    catchSize(); catchUpdateHud();
+    catchScheduleSpawn();
+    catch_.rafId = requestAnimationFrame(catchTick);
+    clearInterval(catch_.timeT);
+    catch_.timeT = setInterval(()=>{
+      if(!catch_.running) return;
+      catch_.timeLeft -= 1; catchUpdateHud();
+      if(catch_.timeLeft <= 0){ endCatch(false); }
+    }, 1000);
+  }
+  function stopCatch(){
+    catch_.running = false;
+    clearTimeout(catch_.spawnT); clearInterval(catch_.timeT); cancelAnimationFrame(catch_.rafId);
+    catch_.items.forEach(it=>it.el.remove()); catch_.items = [];
+  }
+  function endCatch(success){
+    stopCatch();
+    if(success){
+      addLove(20,12); sfxComplete();
+      catchOverlay.innerHTML = '<h2>Sweet! Candy found Teddy\'s heart! ❤️</h2><p>+20 Love Points, +12% Love Meter</p><button class="menuBtn" id="catchContinue">Continue</button><br><button class="backBtn" id="catchRetry2">Play again</button>';
+    } else {
+      catchOverlay.innerHTML = '<h2>Almost!</h2><p>Score: '+catch_.score+' — Hearts: '+catch_.hearts+'/'+CATCH_GOAL+'</p><button class="menuBtn" id="catchRetry">Try Again</button><br><button class="backBtn" id="catchToHub">Back to games</button>';
+    }
+    catchOverlay.style.display = 'flex';
+    const cont = document.getElementById('catchContinue'); if(cont) cont.onclick = ()=>{ sfxClick(); showScreen('screen-hub'); };
+    const retry2 = document.getElementById('catchRetry2'); if(retry2) retry2.onclick = ()=>{ sfxClick(); startCatch(); };
+    const retry = document.getElementById('catchRetry'); if(retry) retry.onclick = ()=>{ sfxClick(); startCatch(); };
+    const toHub = document.getElementById('catchToHub'); if(toHub) toHub.onclick = ()=>{ sfxClick(); showScreen('screen-hub'); };
+  }
+
+  // ================= MINI-GAME 2: SWEET MEMORY =================
+  const mem = { cards:[], flipped:[], matched:0, lock:false, seconds:0, intervalId:null, running:false };
+  const MEM_EMOJIS = ['🍭','❤️','🌸','🍓','🧸','💌'];
+  const memGrid = document.getElementById('memGrid');
+  const memOverlay = document.getElementById('memOverlay');
+
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+  function startMemory(){
+    mem.running = true; mem.matched = 0; mem.flipped = []; mem.lock = false; mem.seconds = 0;
+    let deck = shuffle(MEM_EMOJIS.concat(MEM_EMOJIS).map((e,i)=>({id:i,emoji:e,matched:false,flipped:false})));
+    mem.cards = deck;
+    memOverlay.style.display = 'none';
+    document.getElementById('memPairs').textContent = '0/6';
+    document.getElementById('memTime').textContent = '0';
+    renderMemGrid();
+    clearInterval(mem.intervalId);
+    mem.intervalId = setInterval(()=>{ if(mem.running){ mem.seconds += 1; document.getElementById('memTime').textContent = mem.seconds; } }, 1000);
+  }
+  function stopMemory(){ mem.running = false; clearInterval(mem.intervalId); }
+
+  function renderMemGrid(){
+    Array.from(memGrid.querySelectorAll('.memCard')).forEach(c=>c.remove());
+    mem.cards.forEach((card,idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'memCard' + (card.flipped||card.matched ? '' : ' hidden-face') + (card.matched?' matched':'');
+      btn.textContent = (card.flipped || card.matched) ? card.emoji : '❓';
+      btn.onclick = ()=> memFlip(idx);
+      memGrid.insertBefore(btn, memOverlay);
+    });
+  }
+
+  function memFlip(idx){
+    if(!mem.running || mem.lock) return;
+    const card = mem.cards[idx];
+    if(card.matched || card.flipped) return;
+    card.flipped = true;
+    sfxClick();
+    renderMemGrid();
+    mem.flipped.push(idx);
+    if(mem.flipped.length === 2){
+      mem.lock = true;
+      const [a,b] = mem.flipped;
+      if(mem.cards[a].emoji === mem.cards[b].emoji){
+        mem.cards[a].matched = true; mem.cards[b].matched = true;
+        mem.matched += 1; sfxMatch();
+        document.getElementById('memPairs').textContent = mem.matched + '/6';
+        mem.flipped = []; mem.lock = false;
+        renderMemGrid();
+        if(mem.matched >= 6){ endMemory(); }
+      } else {
+        setTimeout(()=>{
+          mem.cards[a].flipped = false; mem.cards[b].flipped = false;
+          mem.flipped = []; mem.lock = false;
+          renderMemGrid();
+        }, 650);
+      }
+    }
+  }
+
+  function endMemory(){
+    stopMemory();
+    addLove(15,8); sfxComplete();
+    memOverlay.innerHTML = '<h2>Perfect match! 💕</h2><p>Just like Candy &amp; Teddy. Time: '+mem.seconds+'s</p><button class="menuBtn" id="memContinue">Continue</button><br><button class="backBtn" id="memRetry">Play again</button>';
+    memOverlay.style.display = 'flex';
+    document.getElementById('memContinue').onclick = ()=>{ sfxClick(); showScreen('screen-hub'); };
+    document.getElementById('memRetry').onclick = ()=>{ sfxClick(); startMemory(); };
+  }
+
+  // ================= MINI-GAME 3: CANDY DELIVERY =================
+  const maze = { pos:{r:4,c:0}, goal:{r:0,c:4}, obstacles:[[1,1],[2,1],[1,3],[2,3],[0,2]], running:false };
+  const mazeGrid = document.getElementById('mazeGrid');
+  const deliveryOverlay = document.getElementById('deliveryOverlay');
+
+  function isObstacle(r,c){ return maze.obstacles.some(o=>o[0]===r && o[1]===c); }
+
+  function renderMaze(){
+    mazeGrid.innerHTML = '';
+    for(let r=0;r<5;r++){
+      for(let c=0;c<5;c++){
+        const cell = document.createElement('div');
+        cell.className = 'mazeCell';
+        if(isObstacle(r,c)) { cell.classList.add('obstacle'); cell.textContent = '🌳'; }
+        else if(r===maze.goal.r && c===maze.goal.c) { cell.classList.add('goalCell'); cell.textContent = '🍭'; }
+        if(r===maze.pos.r && c===maze.pos.c) cell.textContent = '🧸';
+        mazeGrid.appendChild(cell);
+      }
+    }
+  }
+
+  function mazeMove(dr,dc){
+    if(!maze.running) return;
+    const nr = maze.pos.r + dr, nc = maze.pos.c + dc;
+    if(nr<0||nr>4||nc<0||nc>4) { sfxError(); return; }
+    if(isObstacle(nr,nc)) { sfxError(); return; }
+    maze.pos = {r:nr,c:nc};
+    sfxClick();
+    renderMaze();
+    if(nr===maze.goal.r && nc===maze.goal.c){ endDelivery(); }
+  }
+  document.getElementById('dUp').onclick = ()=> mazeMove(-1,0);
+  document.getElementById('dDown').onclick = ()=> mazeMove(1,0);
+  document.getElementById('dLeft').onclick = ()=> mazeMove(0,-1);
+  document.getElementById('dRight').onclick = ()=> mazeMove(0,1);
+  document.addEventListener('keydown', e=>{
+    if(!maze.running) return;
+    if(e.key==='ArrowUp') mazeMove(-1,0);
+    if(e.key==='ArrowDown') mazeMove(1,0);
+    if(e.key==='ArrowLeft') mazeMove(0,-1);
+    if(e.key==='ArrowRight') mazeMove(0,1);
+  });
+
+  function startDelivery(){
+    maze.running = true; maze.pos = {r:4,c:0};
+    deliveryOverlay.style.display = 'none';
+    renderMaze();
+  }
+  function stopDelivery(){ maze.running = false; }
+
+  function endDelivery(){
+    maze.running = false;
+    addLove(15,8); sfxComplete();
+    deliveryOverlay.innerHTML = '<h2>"You came all this way for me? 🥺"</h2><p>"Of course. ❤️" — Teddy</p><button class="menuBtn" id="delContinue">Continue</button><br><button class="backBtn" id="delRetry">Play again</button>';
+    deliveryOverlay.style.display = 'flex';
+    document.getElementById('delContinue').onclick = ()=>{ sfxClick(); showScreen('screen-hub'); };
+    document.getElementById('delRetry').onclick = ()=>{ sfxClick(); startDelivery(); };
+  }
+
+  // ================= STORY MODE =================
+  const STORY_ORDER = ['meeting','gift','date','hug'];
+  const STORY_SCENES = {
+    meeting: { title:'First Meeting', lines:[
+      {who:'candy', text:"Teddy! I saved this candy for you."},
+      {who:'teddy', text:"But that's your favorite..."},
+      {who:'candy', text:"You're my favorite. ❤️"}
+    ]},
+    gift: { title:'First Gift', lines:[
+      {who:'teddy', text:"I made you something, Candy."},
+      {who:'candy', text:"A flower crown? It's beautiful!"},
+      {who:'teddy', text:"Just like you."}
+    ]},
+    date: { title:'First Date', lines:[
+      {who:'candy', text:"Look at all these stars, Teddy!"},
+      {who:'teddy', text:"None of them shine as bright as you."},
+      {who:'candy', text:"Smooth, bear. Real smooth."}
+    ]},
+    hug: { title:'Big Hug', lines:[
+      {who:'teddy', text:"Candy... thank you for finding me."},
+      {who:'candy', text:"Always. Come here, you."},
+      {who:'both', text:"They hug tight, hearts glowing. 💞"}
+    ]}
+  };
+
+  function renderStoryList(){
+    const list = document.getElementById('storyList');
+    document.getElementById('storyPlayer').style.display = 'none';
+    list.style.display = 'block';
+    list.innerHTML = '';
+    STORY_ORDER.forEach(id=>{
+      const scene = STORY_SCENES[id];
+      const unlocked = state.unlockedScenes.indexOf(id) !== -1;
+      const btn = document.createElement('button');
+      btn.className = 'gameCard';
+      btn.innerHTML = (unlocked ? '📖 ' : '🔒 ') + scene.title + '<span class="gcSub">' + (unlocked ? 'Tap to replay' : 'Unlocks as your Love Meter fills') + '</span>';
+      if(!unlocked) btn.disabled = true;
+      else btn.onclick = ()=>{ sfxClick(); playScene(id); };
+      list.appendChild(btn);
+    });
+  }
+
+  function typeLine(text, el, cb){
+    el.textContent = '';
+    let i = 0;
+    clearInterval(el._iv);
+    el._iv = setInterval(()=>{
+      el.textContent += text.charAt(i); i++;
+      if(i >= text.length){ clearInterval(el._iv); cb && cb(); }
+    }, 22);
+  }
+
+  function playScene(id){
+    const scene = STORY_SCENES[id];
+    document.getElementById('storyList').style.display = 'none';
+    const player = document.getElementById('storyPlayer');
+    player.style.display = 'block';
+    let idx = 0;
+    const whoEl = document.getElementById('storyWho');
+    const textEl = document.getElementById('storyText');
+    const nextBtn = document.getElementById('storyNextBtn');
+    function showLine(){
+      const line = scene.lines[idx];
+      whoEl.textContent = line.who==='candy' ? 'Candy 🍭' : (line.who==='teddy' ? 'Teddy 🧸' : 'Candy & Teddy 🍭🧸');
+      typeLine(line.text, textEl);
+    }
+    showLine();
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = ()=>{
+      sfxClick();
+      idx++;
+      if(idx >= scene.lines.length){ renderStoryList(); }
+      else { showLine(); }
+    };
+  }
+
+  // ================= COLLECTION =================
+  const OUTFITS = [
+    {id:'strawberry-dress', name:"Strawberry Dress", icon:'👗', cost:40},
+    {id:'pink-pajamas', name:"Pink Pajamas", icon:'🩱', cost:25},
+    {id:'party-outfit', name:"Party Outfit", icon:'✨', cost:55},
+    {id:'cozy-sweater', name:"Cozy Sweater", icon:'🧶', cost:30},
+    {id:'school-outfit', name:"School Outfit", icon:'🎒', cost:35},
+    {id:'formal-outfit', name:"Formal Outfit", icon:'🎩', cost:60}
+  ];
+  const GIFTS = [
+    {id:'lollipop', name:'Lollipop', icon:'🍭', cost:10},
+    {id:'flowers', name:'Flowers', icon:'💐', cost:15},
+    {id:'chocolate', name:'Chocolate', icon:'🍫', cost:15},
+    {id:'love-letter', name:'Love Letter', icon:'💌', cost:20},
+    {id:'plushie', name:'Teddy Plushie', icon:'🧸', cost:35}
+  ];
+  const BACKGROUNDS = [
+    {id:'candy-shop', name:'Candy Shop', icon:'🍬', cost:30},
+    {id:'bedroom', name:'Bedroom', icon:'🛏️', cost:25},
+    {id:'park', name:'Park', icon:'🌳', cost:20},
+    {id:'beach', name:'Beach', icon:'🏖️', cost:30},
+    {id:'starry-night', name:'Starry Night', icon:'🌌', cost:40},
+    {id:'cafe', name:"Valentine's Café", icon:'☕', cost:45}
+  ];
+
+  function renderCollSection(containerId, items, stateKey){
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    items.forEach(item=>{
+      const unlocked = state[stateKey].indexOf(item.id) !== -1;
+      const btn = document.createElement('button');
+      btn.className = 'collCard' + (unlocked ? ' unlocked' : '');
+      btn.innerHTML = '<div class="collIcon">'+item.icon+'</div><div class="collName">'+item.name+'</div><div class="collCost">'+(unlocked ? '✓ Unlocked' : '💗 '+item.cost)+'</div>';
+      btn.onclick = ()=>{
+        sfxClick();
+        if(unlocked) return;
+        if(state.lovePoints >= item.cost){
+          state.lovePoints -= item.cost;
+          state[stateKey].push(item.id);
+          saveState(); sfxLove(); renderTopBar();
+          renderCollSection(containerId, items, stateKey);
+        } else {
+          sfxError();
+          btn.classList.add('shake');
+          setTimeout(()=>btn.classList.remove('shake'), 400);
+        }
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function renderCollection(){
+    renderCollSection('collOutfits', OUTFITS, 'unlockedOutfits');
+    renderCollSection('collGifts', GIFTS, 'unlockedGifts');
+    renderCollSection('collBgs', BACKGROUNDS, 'unlockedBackgrounds');
+  }
+
+  // ---------------- init ----------------
+  showScreen('screen-title');
+
+})();
+</script>
+
+</body>
+</html>
