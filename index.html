@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Candy &amp; Teddy - Story Mode</title>
+<style>
+  :root{
+    --cream:#FFF3E4;
+    --ink:#3B2A22;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+  html,body{height:100%;margin:0;}
+  body{
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at 30% 20%, #FFF7EC, #FFE3CF 55%, #CDEEFB 100%);
+    font-family: -apple-system, "Segoe UI Rounded", "Trebuchet MS", "Helvetica Neue", sans-serif;
+    color:var(--ink);
+    padding:18px;
+  }
+
+  #card{
+    width:min(94vw, 380px);
+    background:linear-gradient(180deg, #FFF3E4, #CFEFFF);
+    border-radius:34px;
+    padding:16px;
+    box-shadow: 0 18px 40px rgba(139,91,55,0.25), inset 0 0 0 6px rgba(255,255,255,0.55);
+    position:relative;
+    overflow:hidden;
+  }
+
+  #titleRow{ text-align:center; margin-bottom:6px; }
+  #titleRow h1{ margin:2px 0 0 0; font-size:24px; letter-spacing:0.3px; }
+  #titleRow h1 span.heart{color:#FF7AA2;}
+  #titleRow p{ margin:2px 0 0 0; font-size:12.5px; opacity:0.75; }
+
+  #hud{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 4px 8px 4px; font-size:13px; font-weight:700;
+  }
+  #hud .stat{
+    background:rgba(255,255,255,0.65); border-radius:14px;
+    padding:5px 10px; display:flex; align-items:center; gap:5px;
+    white-space:nowrap;
+  }
+  #goalWrap{
+    flex:1; margin:0 8px; height:14px;
+    background:rgba(255,255,255,0.6); border-radius:10px; overflow:hidden;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.8);
+    position:relative;
+  }
+  #goalBar{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, #9FE3C4, #4CAF7D);
+    transition: width 0.25s ease;
+  }
+  #goalLabel{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:9.5px; font-weight:800; color:#2c4a3a; letter-spacing:0.2px;
+  }
+
+  #levelTag{
+    text-align:center; font-size:11.5px; font-weight:700; opacity:0.7; margin-bottom:4px;
+  }
+
+  #playfield{
+    position:relative; width:100%; height:440px;
+    border-radius:26px; overflow:hidden;
+    box-shadow: inset 0 0 0 4px rgba(255,255,255,0.7);
+    touch-action:none;
+    transition: background 0.6s ease;
+    background: linear-gradient(180deg, #FFF9F0 0%, #EAF7FF 60%, #DFF3FF 100%);
+  }
+
+  .decor{ position:absolute; pointer-events:none; opacity:0.85; }
+
+  #candyChar{ position:absolute; top:10px; left:50%; transform:translateX(-50%); width:76px; height:76px; z-index:3; }
+  #teddyChar{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); width:84px; height:84px; z-index:5; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.15)); }
+
+  .falling{ position:absolute; font-size:26px; line-height:1; z-index:4; will-change: transform; pointer-events:none; }
+
+  .pop{ position:absolute; font-size:20px; z-index:6; pointer-events:none; animation: popUp 0.6s ease-out forwards; }
+  @keyframes popUp{ 0%{transform:translateY(0) scale(0.6); opacity:1;} 100%{transform:translateY(-40px) scale(1.3); opacity:0;} }
+
+  .flash{ animation: flashRed 0.35s ease; }
+  @keyframes flashRed{ 0%{filter:brightness(1);} 40%{filter:brightness(1.6) saturate(1.4) hue-rotate(-20deg);} 100%{filter:brightness(1);} }
+
+  #overlay{
+    position:absolute; inset:0; background:rgba(255,244,230,0.95);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:22px; z-index:10; border-radius:26px;
+  }
+  #overlay h2{ margin:6px 0; font-size:20px; }
+  #overlay .storyText{ margin:4px 0 16px 0; font-size:13.5px; line-height:1.5; opacity:0.85; max-width:270px; }
+  #overlay .bears{ display:flex; gap:10px; margin-bottom:8px; }
+  #overlay .bears svg{ width:64px; height:64px; }
+  #overlay .levelPill{
+    font-size:11px; font-weight:800; letter-spacing:0.3px; color:#D9556F;
+    background:rgba(255,122,162,0.12); padding:4px 12px; border-radius:12px; margin-bottom:6px;
+  }
+
+  button.playBtn{
+    border:none; background:linear-gradient(135deg, #FF9FB3, #FF7AA2); color:#fff;
+    font-weight:800; font-size:15px; padding:11px 26px; border-radius:20px;
+    box-shadow: 0 8px 0 #D9556F; cursor:pointer; transition: transform 0.05s ease;
+  }
+  button.playBtn:active{ transform:translateY(6px); box-shadow: 0 2px 0 #D9556F; }
+
+  button.ghostBtn{
+    border:none; background:transparent; color:#8B5B37; font-weight:700; font-size:12.5px;
+    margin-top:10px; text-decoration:underline; cursor:pointer;
+  }
+
+  #footer{ text-align:center; font-size:11px; opacity:0.55; margin-top:10px; }
+
+  #celebrate{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    z-index:9; pointer-events:none;
+  }
+  #celebrate .msg{
+    background:rgba(255,255,255,0.85); padding:10px 18px; border-radius:16px;
+    font-weight:800; font-size:15px; color:#D9556F; box-shadow:0 6px 16px rgba(0,0,0,0.12);
+  }
+</style>
+</head>
+<body>
+
+<div id="card">
+  <div id="titleRow">
+    <h1>Candy <span class="heart">&#9829;</span> Teddy</h1>
+    <p id="levelTitle">Story Mode</p>
+  </div>
+
+  <div id="levelTag">Level <span id="levelNum">1</span> of <span id="levelTotal">5</span></div>
+
+  <div id="hud">
+    <div class="stat" id="scoreStat">⭐ <span id="scoreVal">0</span></div>
+    <div id="goalWrap"><div id="goalBar"></div><div id="goalLabel">0 / 0</div></div>
+    <div class="stat" id="livesStat">💗💗💗</div>
+  </div>
+
+  <div id="playfield">
+    <div id="decorLayer"></div>
+    <div id="candyChar"></div>
+    <div id="teddyChar"></div>
+
+    <div id="celebrate"><div class="msg" id="celebrateMsg">Teddy loves Candy! &#9829;</div></div>
+
+    <div id="overlay">
+      <div class="levelPill" id="levelPill">LEVEL 1</div>
+      <div class="bears">
+        <div id="startCandy"></div>
+        <div id="startTeddy"></div>
+      </div>
+      <h2 id="overlayTitle">Morning Walk in the Park</h2>
+      <p class="storyText" id="overlayText">Teddy spots Candy wandering through the park and wants to catch her attention with treats before she wanders off.</p>
+      <button class="playBtn" id="playBtn">Start Level</button>
+      <button class="ghostBtn" id="restartAllBtn" style="display:none;">Restart story from Level 1</button>
+    </div>
+  </div>
+
+  <div id="footer">made with &#9829; for Candy &amp; Teddy</div>
+</div>
+
+<script>
+(function(){
+
+  // ---------- Bear SVGs ----------
+  function bearSVG(kind){
+    const body   = kind === 'candy' ? '#FFFDF9' : '#C99168';
+    const earIn  = kind === 'candy' ? '#3B2A22' : '#8B5B37';
+    const outline= '#3B2A22';
+    const blush  = '#FFB3C0';
+    return `
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      <ellipse cx="50" cy="90" rx="30" ry="6" fill="rgba(0,0,0,0.08)"/>
+      <circle cx="26" cy="26" r="14" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="74" cy="26" r="14" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="26" cy="26" r="6" fill="${earIn}"/>
+      <circle cx="74" cy="26" r="6" fill="${earIn}"/>
+      <circle cx="50" cy="52" r="34" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <circle cx="30" cy="58" r="7" fill="${blush}"/>
+      <circle cx="70" cy="58" r="7" fill="${blush}"/>
+      <circle cx="38" cy="46" r="3.4" fill="${outline}"/>
+      <circle cx="62" cy="46" r="3.4" fill="${outline}"/>
+      <path d="M44 56 q6 6 12 0" stroke="${outline}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="20" cy="82" rx="9" ry="7" fill="${body}" stroke="${outline}" stroke-width="3"/>
+      <ellipse cx="80" cy="82" rx="9" ry="7" fill="${body}" stroke="${outline}" stroke-width="3"/>
+    </svg>`;
+  }
+
+  document.getElementById('candyChar').innerHTML = bearSVG('candy');
+  document.getElementById('teddyChar').innerHTML = bearSVG('teddy');
+  document.getElementById('startCandy').innerHTML = bearSVG('candy');
+  document.getElementById('startTeddy').innerHTML = bearSVG('teddy');
+
+  // ---------- Levels (story mode) ----------
+  const LEVELS = [
+    {
+      title: "Morning Walk in the Park",
+      intro: "Teddy spots Candy wandering through the park and wants to catch her attention with treats before she wanders off.",
+      outro: "Candy giggles and waves — Teddy has her attention now!",
+      bg: "linear-gradient(180deg, #EFFBEA 0%, #DFF3D7 55%, #CDEFC9 100%)",
+      goal: 12,
+      fallSpeedBase: 85,
+      spawnEvery: 950,
+      badChance: 0.10,
+      decor: [
+        {emoji:'🌳', top:'60px', left:'6px', size:'34px'},
+        {emoji:'🌼', top:'150px', left:'14px', size:'20px'},
+        {emoji:'🌳', top:'50px', right:'8px', size:'30px'}
+      ]
+    },
+    {
+      title: "Afternoon at the Beach",
+      intro: "They race to the shore. Candy tosses seaside treats Teddy's way as the waves roll in.",
+      outro: "Sandy paws, happy hearts. On to the next adventure!",
+      bg: "linear-gradient(180deg, #EAF7FF 0%, #CFEFFF 55%, #B9E4FF 100%)",
+      goal: 15,
+      fallSpeedBase: 100,
+      spawnEvery: 850,
+      badChance: 0.14,
+      decor: [
+        {emoji:'🌊', top:'30px', left:'10px', size:'26px'},
+        {emoji:'🐚', top:'170px', right:'16px', size:'20px'},
+        {emoji:'☀️', top:'18px', right:'20px', size:'28px'}
+      ]
+    },
+    {
+      title: "Rainy Day Cafe",
+      intro: "Rain taps the window. Between warm pastries, a few grumpy little storm clouds sneak in too.",
+      outro: "Cozy, warm, and full of sweets. The rain doesn't stand a chance against these two.",
+      bg: "linear-gradient(180deg, #F3ECE3 0%, #E3D3C3 55%, #D4BFA9 100%)",
+      goal: 18,
+      fallSpeedBase: 110,
+      spawnEvery: 780,
+      badChance: 0.20,
+      decor: [
+        {emoji:'☕', top:'40px', left:'12px', size:'24px'},
+        {emoji:'🌧️', top:'20px', right:'14px', size:'26px'},
+        {emoji:'🧺', top:'180px', left:'16px', size:'22px'}
+      ]
+    },
+    {
+      title: "Starry Night Picnic",
+      intro: "Under the stars, treats fall fast and the clouds get sneakier. Teddy focuses — for Candy.",
+      outro: "A blanket, the stars, and a very full love meter. Almost home now.",
+      bg: "linear-gradient(180deg, #2E2A4A 0%, #453A66 55%, #5B4B7A 100%)",
+      goal: 20,
+      fallSpeedBase: 125,
+      spawnEvery: 700,
+      badChance: 0.24,
+      decor: [
+        {emoji:'⭐', top:'20px', left:'20px', size:'18px'},
+        {emoji:'✨', top:'60px', right:'24px', size:'18px'},
+        {emoji:'🌙', top:'16px', right:'14px', size:'26px'}
+      ]
+    },
+    {
+      title: "Home Sweet Home",
+      intro: "One last dash — the hardest yet. Teddy has something to ask Candy once the treats are caught.",
+      outro: "Teddy catches the last heart and turns to Candy... 'Be mine forever?' Candy says yes. The End. &#9829;",
+      bg: "linear-gradient(180deg, #FFE9F0 0%, #FFD3E1 55%, #FFC2D6 100%)",
+      goal: 25,
+      fallSpeedBase: 140,
+      spawnEvery: 620,
+      badChance: 0.26,
+      decor: [
+        {emoji:'🏠', top:'40px', left:'10px', size:'26px'},
+        {emoji:'💐', top:'170px', right:'14px', size:'22px'},
+        {emoji:'💫', top:'20px', right:'20px', size:'20px'}
+      ]
+    }
+  ];
+
+  document.getElementById('levelTotal').textContent = LEVELS.length;
+
+  const playfield = document.getElementById('playfield');
+  const decorLayer = document.getElementById('decorLayer');
+  const teddyEl = document.getElementById('teddyChar');
+  const overlay = document.getElementById('overlay');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlayText = document.getElementById('overlayText');
+  const levelPill = document.getElementById('levelPill');
+  const levelTitleEl = document.getElementById('levelTitle');
+  const levelNumEl = document.getElementById('levelNum');
+  const playBtn = document.getElementById('playBtn');
+  const restartAllBtn = document.getElementById('restartAllBtn');
+  const scoreVal = document.getElementById('scoreVal');
+  const livesStat = document.getElementById('livesStat');
+  const goalBar = document.getElementById('goalBar');
+  const goalLabel = document.getElementById('goalLabel');
+  const celebrate = document.getElementById('celebrate');
+  const celebrateMsg = document.getElementById('celebrateMsg');
+
+  let fieldW, fieldH;
+  let teddyX = 0;
+  const teddyW = 84, teddyH = 84;
+  let running = false;
+  let currentLevel = 0;
+  let totalScore = 0;
+  let lives = 3;
+  let catches = 0;
+  let items = [];
+  let spawnTimer = null;
+  let rafId = null;
+  let lastTime = 0;
+
+  const GOOD_ITEMS = ['🍬','🍭','💗','🧁'];
+  const BAD_ITEMS = ['⛈️','🌩️'];
+
+  function sizeField(){
+    const rect = playfield.getBoundingClientRect();
+    fieldW = rect.width;
+    fieldH = rect.height;
+    teddyX = fieldW/2 - teddyW/2;
+    positionTeddy();
+  }
+  window.addEventListener('resize', sizeField);
+
+  function positionTeddy(){
+    teddyEl.style.left = teddyX + 'px';
+    teddyEl.style.bottom = '10px';
+  }
+
+  function setTeddyFromClientX(clientX){
+    const rect = playfield.getBoundingClientRect();
+    let x = clientX - rect.left - teddyW/2;
+    x = Math.max(4, Math.min(fieldW - teddyW - 4, x));
+    teddyX = x;
+    positionTeddy();
+  }
+
+  playfield.addEventListener('pointerdown', (e)=>{ if(running) setTeddyFromClientX(e.clientX); });
+  playfield.addEventListener('pointermove', (e)=>{
+    if(!running) return;
+    if(e.pressure === 0 && e.pointerType === 'mouse') return;
+    setTeddyFromClientX(e.clientX);
+  });
+  playfield.addEventListener('touchmove', (e)=>{
+    if(!running) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    if(t) setTeddyFromClientX(t.clientX);
+  }, {passive:false});
+
+  document.addEventListener('keydown', (e)=>{
+    if(!running) return;
+    if(e.key === 'ArrowLeft'){ teddyX = Math.max(4, teddyX - 26); positionTeddy(); }
+    if(e.key === 'ArrowRight'){ teddyX = Math.min(fieldW - teddyW - 4, teddyX + 26); positionTeddy(); }
+  });
+
+  function applyDecor(level){
+    decorLayer.innerHTML = '';
+    (level.decor || []).forEach(d=>{
+      const s = document.createElement('div');
+      s.className = 'decor';
+      s.textContent = d.emoji;
+      s.style.fontSize = d.size || '24px';
+      if(d.top) s.style.top = d.top;
+      if(d.left) s.style.left = d.left;
+      if(d.right) s.style.right = d.right;
+      decorLayer.appendChild(s);
+    });
+  }
+
+  function spawnItem(){
+    const level = LEVELS[currentLevel];
+    const isBad = Math.random() < level.badChance;
+    const symbol = isBad
+      ? BAD_ITEMS[Math.floor(Math.random()*BAD_ITEMS.length)]
+      : GOOD_ITEMS[Math.floor(Math.random()*GOOD_ITEMS.length)];
+    const el = document.createElement('div');
+    el.className = 'falling';
+    el.textContent = symbol;
+    const x = 10 + Math.random() * (fieldW - 40);
+    el.style.left = x + 'px';
+    el.style.top = '60px';
+    playfield.insertBefore(el, teddyEl);
+    items.push({
+      el, x, y:60,
+      speed: level.fallSpeedBase + Math.random()*35 + catches*1.5,
+      bad: isBad,
+      caught:false
+    });
+  }
+
+  function scheduleSpawn(){
+    clearTimeout(spawnTimer);
+    const level = LEVELS[currentLevel];
+    spawnTimer = setTimeout(()=>{
+      if(running){
+        spawnItem();
+        scheduleSpawn();
+      }
+    }, Math.max(380, level.spawnEvery - catches*8));
+  }
+
+  function popText(x,y,text,color){
+    const p = document.createElement('div');
+    p.className = 'pop';
+    p.textContent = text;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.color = color || '#D9556F';
+    playfield.appendChild(p);
+    setTimeout(()=>p.remove(), 650);
+  }
+
+  function updateHUD(){
+    const level = LEVELS[currentLevel];
+    scoreVal.textContent = totalScore;
+    livesStat.textContent = '💗'.repeat(Math.max(lives,0)) + '🤍'.repeat(Math.max(3-lives,0));
+    const pct = Math.min(100, (catches / level.goal) * 100);
+    goalBar.style.width = pct + '%';
+    goalLabel.textContent = catches + ' / ' + level.goal;
+  }
+
+  function loseLife(){
+    lives -= 1;
+    teddyEl.classList.remove('flash');
+    void teddyEl.offsetWidth;
+    teddyEl.classList.add('flash');
+    updateHUD();
+    if(lives <= 0){
+      failLevel();
+    }
+  }
+
+  function doCelebration(){
+    const msgs = ["Nice catch! &#9829;", "Sweet! &#10024;", "Candy smiles! &#9829;"];
+    celebrateMsg.innerHTML = msgs[Math.floor(Math.random()*msgs.length)];
+    celebrate.style.display = 'flex';
+    setTimeout(()=>{ celebrate.style.display = 'none'; }, 550);
+  }
+
+  function stopLoop(){
+    running = false;
+    clearTimeout(spawnTimer);
+    cancelAnimationFrame(rafId);
+    items.forEach(it=>it.el.remove());
+    items = [];
+  }
+
+  function tick(ts){
+    if(!running) return;
+    if(!lastTime) lastTime = ts;
+    const dt = Math.min(40, ts - lastTime) / 1000;
+    lastTime = ts;
+
+    const teddyRect = { left: teddyX + 10, right: teddyX + teddyW - 10, top: fieldH - 10 - teddyH + 20 };
+    const level = LEVELS[currentLevel];
+
+    for(let i = items.length - 1; i >= 0; i--){
+      const it = items[i];
+      it.y += it.speed * dt;
+      it.el.style.top = it.y + 'px';
+
+      if(!it.caught && it.y + 20 >= teddyRect.top && it.y <= fieldH - 10){
+        const itemCenterX = it.x + 13;
+        if(itemCenterX >= teddyRect.left && itemCenterX <= teddyRect.right){
+          it.caught = true;
+          it.el.remove();
+          items.splice(i,1);
+          if(it.bad){
+            popText(it.x, it.y, 'ouch!', '#B33B4A');
+            loseLife();
+          } else {
+            const pts = it.el.textContent === '💗' ? 3 : 1;
+            totalScore += pts;
+            catches += 1;
+            popText(it.x, it.y - 6, '+' + pts, '#4CAF7D');
+            if(catches % 3 === 0) doCelebration();
+            updateHUD();
+            if(catches >= level.goal){
+              completeLevel();
+            }
+          }
+          continue;
+        }
+      }
+
+      if(it.y > fieldH + 10){
+        it.el.remove();
+        items.splice(i,1);
+      }
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function showOverlayForLevel(idx, opts){
+    const level = LEVELS[idx];
+    opts = opts || {};
+    levelPill.textContent = 'LEVEL ' + (idx+1);
+    levelNumEl.textContent = idx+1;
+    levelTitleEl.textContent = level.title;
+    overlayTitle.textContent = opts.title || level.title;
+    overlayText.innerHTML = opts.text || level.intro;
+    playBtn.textContent = opts.btn || 'Start Level';
+    restartAllBtn.style.display = opts.showRestart ? 'inline-block' : 'none';
+    playfield.style.background = level.bg;
+    applyDecor(level);
+    overlay.style.display = 'flex';
+  }
+
+  function beginLevel(idx){
+    currentLevel = idx;
+    lives = 3;
+    catches = 0;
+    updateHUD();
+    overlay.style.display = 'none';
+    playfield.style.background = LEVELS[idx].bg;
+    applyDecor(LEVELS[idx]);
+    running = true;
+    lastTime = 0;
+    sizeField();
+    scheduleSpawn();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function completeLevel(){
+    stopLoop();
+    const level = LEVELS[currentLevel];
+    if(currentLevel === LEVELS.length - 1){
+      showOverlayForLevel(currentLevel, {
+        title: 'The End',
+        text: level.outro + '<br><br>Final score: <b>' + totalScore + '</b>',
+        btn: 'Play the story again',
+        showRestart: false
+      });
+      playBtn.onclick = restartStory;
+    } else {
+      showOverlayForLevel(currentLevel, {
+        title: 'Level complete!',
+        text: level.outro,
+        btn: 'Next Level',
+        showRestart: false
+      });
+      playBtn.onclick = ()=> beginLevel(currentLevel + 1);
+    }
+  }
+
+  function failLevel(){
+    stopLoop();
+    const level = LEVELS[currentLevel];
+    showOverlayForLevel(currentLevel, {
+      title: 'Out of hearts',
+      text: 'Teddy got a little too distracted. Try ' + level.title + ' again?',
+      btn: 'Retry Level',
+      showRestart: true
+    });
+    playBtn.onclick = ()=> beginLevel(currentLevel);
+  }
+
+  function restartStory(){
+    totalScore = 0;
+    showOverlayForLevel(0, {});
+    playBtn.onclick = ()=> beginLevel(0);
+  }
+
+  // initial screen
+  showOverlayForLevel(0, {});
+  playBtn.onclick = ()=> beginLevel(0);
+  restartAllBtn.onclick = restartStory;
+
+  requestAnimationFrame(()=>{ sizeField(); });
+
+})();
+</script>
+
+</body>
+</html>
